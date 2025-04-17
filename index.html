@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horror Tarot Duel</title>
+    <style>
+        /* (Keep the same CSS styles from previous version) */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Horror Tarot Duel</h1>
+        <div class="score">
+            Player: <span id="playerScore">0</span> | Computer: <span id="computerScore">0</span>
+        </div>
+        <div id="status">Press 'Draw Cards' to start the round!</div>
+        <div class="cards-container">
+            <div class="card" id="playerCard">
+                <h3>Player's Card</h3>
+                <div class="stats" id="playerStats"></div>
+                <div id="playerButtons"></div>
+            </div>
+            <div class="card" id="computerCard">
+                <h3>Computer's Card</h3>
+                <div class="stats" id="computerStats"></div>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <button onclick="startRound()" id="drawButton">Draw Cards</button>
+        </div>
+    </div>
+
+    <script>
+        let playerWins = 0;
+        let computerWins = 0;
+        let currentPlayerCard = null;
+        let currentComputerCard = null;
+        let playerModifiers = {};
+        let computerModifiers = {};
+
+        // Generated tarot cards (100 entries)
+        const tarotCards = generateTarotCards();
+
+        function generateTarotCards() {
+            // (Keep the same card generation logic from previous version)
+        }
+
+        function generateModifiers() {
+            return {
+                might: getLuckBonus(),
+                agility: getLuckBonus(),
+                wit: getLuckBonus()
+            };
+        }
+
+        function startRound() {
+            if (playerWins >= 3 || computerWins >= 3) {
+                resetGame();
+                return;
+            }
+
+            currentPlayerCard = tarotCards[Math.floor(Math.random() * tarotCards.length)];
+            currentComputerCard = tarotCards[Math.floor(Math.random() * tarotCards.length)];
+            playerModifiers = generateModifiers();
+            computerModifiers = generateModifiers();
+
+            document.getElementById('drawButton').disabled = true;
+            displayCards();
+            enablePlayerChoice();
+        }
+
+        function displayCards() {
+            // Player card display with modifiers
+            document.getElementById('playerStats').innerHTML = `
+                Might: ${currentPlayerCard.might} (${playerModifiers.might}) = ${currentPlayerCard.might + playerModifiers.might}<br>
+                Agility: ${currentPlayerCard.agility} (${playerModifiers.agility}) = ${currentPlayerCard.agility + playerModifiers.agility}<br>
+                Wit: ${currentPlayerCard.wit} (${playerModifiers.wit}) = ${currentPlayerCard.wit + playerModifiers.wit}
+            `;
+
+            // Computer card display with modifiers
+            document.getElementById('computerStats').innerHTML = `
+                Might: ${currentComputerCard.might} (${computerModifiers.might}) = ${currentComputerCard.might + computerModifiers.might}<br>
+                Agility: ${currentComputerCard.agility} (${computerModifiers.agility}) = ${currentComputerCard.agility + computerModifiers.agility}<br>
+                Wit: ${currentComputerCard.wit} (${computerModifiers.wit}) = ${currentComputerCard.wit + computerModifiers.wit}
+            `;
+        }
+
+        function enablePlayerChoice() {
+            const buttons = document.getElementById('playerButtons');
+            buttons.innerHTML = '';
+            ['might', 'agility', 'wit'].forEach(stat => {
+                buttons.innerHTML += `
+                    <button onclick="resolveRound('${stat}')">
+                        Choose ${stat} (${currentPlayerCard[stat] + playerModifiers[stat]})
+                    </button>
+                `;
+            });
+        }
+
+        function resolveRound(playerChoice) {
+            const computerChoice = ['might', 'agility', 'wit'][Math.floor(Math.random() * 3)];
+            
+            const playerScore = currentPlayerCard[playerChoice] + playerModifiers[playerChoice];
+            const computerScore = currentComputerCard[computerChoice] + computerModifiers[computerChoice];
+
+            const result = compareScores(playerScore, computerScore);
+            updateScores(result);
+            showRoundResult(playerScore, computerScore, result, playerChoice, computerChoice);
+        }
+
+        function getLuckBonus() {
+            return Math.floor(Math.random() * 11) - 5;
+        }
+
+        function compareScores(player, computer) {
+            if (player > computer) return 'player';
+            if (computer > player) return 'computer';
+            return 'draw';
+        }
+
+        function updateScores(result) {
+            if (result === 'player') playerWins++;
+            if (result === 'computer') computerWins++;
+            
+            document.getElementById('playerScore').textContent = playerWins;
+            document.getElementById('computerScore').textContent = computerWins;
+
+            if (playerWins >= 3 || computerWins >= 3) {
+                endGame();
+            }
+        }
+
+        function showRoundResult(playerScore, computerScore, result, playerChoice, computerChoice) {
+            let message = `You chose ${playerChoice} (${playerScore})<br>
+                          Computer chose ${computerChoice} (${computerScore})<br>`;
+            
+            if (result === 'draw') {
+                message += "It's a draw!";
+            } else {
+                message += `${result} wins this round!`;
+            }
+
+            // Show potential other outcomes
+            message += "<br><br>Other possible outcomes:";
+            ['might', 'agility', 'wit'].forEach(stat => {
+                if (stat !== playerChoice) {
+                    const potentialScore = currentPlayerCard[stat] + playerModifiers[stat];
+                    message += `<br>${stat}: ${potentialScore}`;
+                }
+            });
+
+            document.getElementById('status').innerHTML = message;
+            document.getElementById('drawButton').disabled = false;
+        }
+
+        function endGame() {
+            const winner = playerWins >= 3 ? 'Player' : 'Computer';
+            document.getElementById('status').innerHTML = `
+                <strong>Game Over! ${winner} wins the game!</strong><br>
+                <button onclick="resetGame()">Play Again</button>
+            `;
+            document.getElementById('drawButton').disabled = true;
+        }
+
+        function resetGame() {
+            playerWins = 0;
+            computerWins = 0;
+            document.getElementById('playerScore').textContent = '0';
+            document.getElementById('computerScore').textContent = '0';
+            document.getElementById('status').textContent = 'Press "Draw Cards" to start a new game!';
+            document.getElementById('drawButton').disabled = false;
+        }
+    </script>
+</body>
+</html>
