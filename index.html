@@ -5,123 +5,193 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Horror Tarot Duel</title>
     <style>
-        /* Simplified CSS */
-        body { background: #1a1a1a; color: white; font-family: Arial; }
-        .container { max-width: 800px; margin: 0 auto; text-align: center; }
-        .card { background: #2a2a2a; padding: 20px; margin: 20px; border-radius: 10px; }
-        button { background: #444; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        /* Maintain previous CSS styles */
+        body { font-family: 'Arial Black', sans-serif; background-color: #1a1a1a; color: #c0c0c0; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .cards-container { display: flex; justify-content: space-around; margin: 20px 0; flex-wrap: wrap; }
+        .card { background-color: #2a2a2a; border: 3px solid #4a4a4a; border-radius: 10px; padding: 15px; width: 200px; text-align: center; margin: 10px; }
+        .card h3 { color: #b22222; margin: 0 0 10px 0; }
+        .stats { margin: 10px 0; }
+        button { background-color: #4a4a4a; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background-color: #6a6a6a; }
+        #status { text-align: center; margin: 20px 0; font-size: 1.2em; min-height: 100px; }
+        .score { font-size: 1.5em; color: #b22222; margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Horror Tarot Duel</h1>
-        <div>Player: <span id="playerScore">0</span> | Computer: <span id="computerScore">0</span></div>
-        <div id="status">Press 'Draw Cards' to start!</div>
-        <div class="card">
-            <div id="playerStats"></div>
-            <div id="playerButtons"></div>
+        <div class="score">
+            Player: <span id="playerScore">0</span> | Computer: <span id="computerScore">0</span>
         </div>
-        <button onclick="startRound()" id="drawButton">Draw Cards</button>
+        <div id="status">Press 'Draw Cards' to begin...</div>
+        <div class="cards-container">
+            <div class="card" id="playerCard">
+                <h3 id="playerName">???</h3>
+                <div class="stats" id="playerStats"></div>
+                <div id="playerButtons"></div>
+            </div>
+            <div class="card" id="computerCard">
+                <h3 id="computerName">???</h3>
+                <div class="stats" id="computerStats"></div>
+            </div>
+        </div>
+        <div style="text-align: center;">
+            <button onclick="startRound()" id="drawButton">Draw Cards</button>
+        </div>
     </div>
 
-<script>
-// Debug mode
-const DEBUG = true;
-
-// Game state
-let playerWins = 0;
-let computerWins = 0;
-let cards = [];
-
-// Generate cards on startup
-generateCards();
-
-function log(message) {
-    if(DEBUG) console.log(`[DEBUG] ${message}`);
-}
-
-function generateCards() {
-    log("Generating cards...");
-    cards = [];
-    for(let i = 0; i < 100; i++) {
-        // Simple stat generation that adds to 15
-        let might = Math.floor(Math.random() * 13) + 1;
-        let agility = Math.floor(Math.random() * (14 - might)) + 1;
-        let wit = 15 - might - agility;
-        
-        cards.push({
-            name: `Card ${i+1}`,
-            might: might,
-            agility: agility,
-            wit: wit
-        });
-    }
-    log(`Generated ${cards.length} cards`);
-}
-
-function startRound() {
-    log("Starting round...");
-    try {
-        // Get random cards
-        const playerCard = cards[Math.floor(Math.random() * cards.length)];
-        const computerCard = cards[Math.floor(Math.random() * cards.length)];
-        
-        // Generate modifiers
-        const playerMods = {
-            might: getBonus(),
-            agility: getBonus(),
-            wit: getBonus()
+    <script>
+        // Horror name components
+        const NAME_PARTS = {
+            prefixes: ["The Dark", "The Bleeding", "The Faceless", "The Hollow", "The Twisted",
+                      "The Screaming", "The Unseen", "The Hungering", "The Endless", "The Forgotten"],
+            suffixes: ["Reaper", "Abomination", "Void", "Torment", "Nightmare",
+                      "Wailing", "Flesh", "Shadow", "Decay", "Phantom"]
         };
-        
-        // Show player card
-        document.getElementById('playerStats').innerHTML = `
-            Might: ${playerCard.might} (${playerMods.might})<br>
-            Agility: ${playerCard.agility} (${playerMods.agility})<br>
-            Wit: ${playerCard.wit} (${playerMods.wit})
-        `;
-        
-        // Create buttons
-        document.getElementById('playerButtons').innerHTML = `
-            <button onclick="resolve('might', ${playerCard.might}, ${playerMods.might})">Choose Might</button>
-            <button onclick="resolve('agility', ${playerCard.agility}, ${playerMods.agility})">Choose Agility</button>
-            <button onclick="resolve('wit', ${playerCard.wit}, ${playerMods.wit})">Choose Wit</button>
-        `;
-        
-        document.getElementById('status').textContent = "Choose a characteristic!";
-        log("Round started successfully");
-        
-    } catch(error) {
-        alert(`Error: ${error.message}`);
-        console.error(error);
-    }
-}
 
-function getBonus() {
-    return Math.floor(Math.random() * 11) - 5;
-}
+        let gameState = {
+            playerWins: 0,
+            computerWins: 0,
+            playerCard: null,
+            computerCard: null,
+            playerBonus: null,
+            computerBonus: null
+        };
 
-function resolve(choice, base, mod) {
-    const playerScore = base + mod;
-    const computerScore = Math.floor(Math.random() * 20) + 1; // Simple AI
-    
-    if(playerScore > computerScore) {
-        playerWins++;
-        document.getElementById('status').innerHTML = `WIN!<br>
-            You: ${playerScore} vs Computer: ${computerScore}`;
-    } else {
-        computerWins++;
-        document.getElementById('status').innerHTML = `LOSE!<br>
-            You: ${playerScore} vs Computer: ${computerScore}`;
-    }
-    
-    document.getElementById('playerScore').textContent = playerWins;
-    document.getElementById('computerScore').textContent = computerWins;
-    
-    if(playerWins >= 3 || computerWins >= 3) {
-        document.getElementById('status').innerHTML += "<br>GAME OVER!";
-        document.getElementById('drawButton').disabled = true;
-    }
-}
-</script>
+        function generateCard() {
+            // Ensure stats sum to 15
+            let stats = [5, 5, 5];
+            for(let i = 0; i < 5; i++) {
+                const from = Math.floor(Math.random() * 3);
+                const to = Math.floor(Math.random() * 3);
+                if(stats[from] > 1) {
+                    stats[from]--;
+                    stats[to]++;
+                }
+            }
+            
+            return {
+                name: `${NAME_PARTS.prefixes[Math.floor(Math.random() * NAME_PARTS.prefixes.length)]} ${
+                    NAME_PARTS.suffixes[Math.floor(Math.random() * NAME_PARTS.suffixes.length)]}`,
+                might: stats[0],
+                agility: stats[1],
+                wit: stats[2]
+            };
+        }
+
+        function startRound() {
+            try {
+                // Reset state
+                gameState.playerCard = generateCard();
+                gameState.computerCard = generateCard();
+                
+                // Display cards
+                document.getElementById('playerName').textContent = gameState.playerCard.name;
+                document.getElementById('playerStats').innerHTML = `
+                    Might: ${gameState.playerCard.might}<br>
+                    Agility: ${gameState.playerCard.agility}<br>
+                    Wit: ${gameState.playerCard.wit}
+                `;
+                
+                document.getElementById('computerName').textContent = "Hidden Terror";
+                document.getElementById('computerStats').textContent = "???";
+                
+                // Enable selection
+                document.getElementById('playerButtons').innerHTML = 
+                    ['might', 'agility', 'wit'].map(stat => `
+                        <button onclick="handleChoice('${stat}')">
+                            Choose ${stat.toUpperCase()}
+                        </button>
+                    `).join('');
+                
+                document.getElementById('drawButton').disabled = true;
+                document.getElementById('status').textContent = "Choose your characteristic...";
+            } catch(error) {
+                alert(`Game error: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        function handleChoice(selectedStat) {
+            try {
+                // Generate random bonuses
+                gameState.playerBonus = {
+                    might: randomBonus(),
+                    agility: randomBonus(),
+                    wit: randomBonus()
+                };
+                
+                gameState.computerBonus = {
+                    might: randomBonus(),
+                    agility: randomBonus(),
+                    wit: randomBonus()
+                };
+
+                // Update displays
+                document.getElementById('playerStats').innerHTML = `
+                    Might: ${gameState.playerCard.might} (${gameState.playerBonus.might})<br>
+                    Agility: ${gameState.playerCard.agility} (${gameState.playerBonus.agility})<br>
+                    Wit: ${gameState.playerCard.wit} (${gameState.playerBonus.wit})
+                `;
+
+                document.getElementById('computerName').textContent = gameState.computerCard.name;
+                document.getElementById('computerStats').innerHTML = `
+                    Might: ${gameState.computerCard.might} (${gameState.computerBonus.might})<br>
+                    Agility: ${gameState.computerCard.agility} (${gameState.computerBonus.agility})<br>
+                    Wit: ${gameState.computerCard.wit} (${gameState.computerBonus.wit})
+                `;
+
+                // Calculate scores
+                const playerScore = gameState.playerCard[selectedStat] + gameState.playerBonus[selectedStat];
+                const computerChoice = ['might', 'agility', 'wit'][Math.floor(Math.random() * 3)];
+                const computerScore = gameState.computerCard[computerChoice] + gameState.computerBonus[computerChoice];
+
+                // Update game state
+                if(playerScore > computerScore) gameState.playerWins++;
+                else if(computerScore > playerScore) gameState.computerWins++;
+
+                // Update UI
+                document.getElementById('playerScore').textContent = gameState.playerWins;
+                document.getElementById('computerScore').textContent = gameState.computerWins;
+                
+                document.getElementById('status').innerHTML = `
+                    You chose ${selectedStat} (${playerScore})<br>
+                    Computer chose ${computerChoice} (${computerScore})<br>
+                    ${getResultText(playerScore, computerScore)}
+                `;
+
+                // Check for winner
+                if(gameState.playerWins >= 3 || gameState.computerWins >= 3) {
+                    endGame();
+                } else {
+                    document.getElementById('drawButton').disabled = false;
+                }
+
+            } catch(error) {
+                alert(`Resolution error: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        function randomBonus() {
+            return Math.floor(Math.random() * 11) - 5; // -5 to +5
+        }
+
+        function getResultText(player, computer) {
+            if(player > computer) return "<span style='color: #00ff00'>YOU WIN THIS ROUND!</span>";
+            if(computer > player) return "<span style='color: #ff0000'>DARKNESS PREVAILS!</span>";
+            return "<span style='color: #888888'>THE VOID CLAIMS THIS ROUND!</span>";
+        }
+
+        function endGame() {
+            const winner = gameState.playerWins >= 3 ? "YOU" : "THE DARKNESS";
+            document.getElementById('status').innerHTML = `
+                <strong style="font-size: 1.5em">${winner} WIN!</strong><br>
+                <button onclick="location.reload()">New Game</button>
+            `;
+            document.getElementById('drawButton').disabled = true;
+        }
+    </script>
 </body>
 </html>
